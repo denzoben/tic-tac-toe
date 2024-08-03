@@ -3,6 +3,7 @@ import { useState } from "react";
 import Player from "./components/Player";
 import GameBoard from "./components/GameBoard";
 import Log from "./components/Log";
+import GameOver from "./components/GameOver";
 
 import { WINNING_COMBINATIONS } from "./winning-combinations";
 
@@ -34,8 +35,14 @@ function App() {
     const thirdsymbol = updatedGameBoard[combination[2].row][combination[2].column];
 
     if(firstsymbol && firstsymbol === secondsymbol && firstsymbol === thirdsymbol){
-      winner = <p>{playerTurn[0].player} Won!</p>
+      winner = playerTurn[0].player;
     }
+  }
+
+  let draw = playerTurn.length === 9 && !firstsymbol;
+
+  function matchRestart(){
+    setPlayerTurn([]);
   }
 
   function handleBoardSelect(rowIndex, colIndex) {
@@ -55,7 +62,7 @@ function App() {
           <Player isActive={activePlayer === "X"} name="Player 1" symbol="X" />
           <Player isActive={activePlayer === "0"} name="Player 2" symbol="0" />
         </ol>
-        {winner}
+        {(winner || draw) && <GameOver matchReset={matchRestart} winner={winner}/>}
         <GameBoard
           onSelect={(rowIndex, colIndex) =>
             handleBoardSelect(rowIndex, colIndex)
