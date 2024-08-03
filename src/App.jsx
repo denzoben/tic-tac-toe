@@ -4,11 +4,39 @@ import Player from "./components/Player";
 import GameBoard from "./components/GameBoard";
 import Log from "./components/Log";
 
+import { WINNING_COMBINATIONS } from "./winning-combinations";
+
 // import "./App.css";
+
+const initialGameBoard = [
+  [null, null, null],
+  [null, null, null],
+  [null, null, null]
+];
 
 function App() {
   const [activePlayer, setActivePlayer] = useState("X");
   const [playerTurn, setPlayerTurn] = useState([]);
+  
+
+  let updatedGameBoard = [...initialGameBoard.map((innerArray) => [...innerArray])];
+  let winner;
+
+  for(const turn of playerTurn){
+    const {board, player} = turn;
+    const {row, col} = board;
+    updatedGameBoard[row][col] = player;
+  }
+
+  for(const combination of WINNING_COMBINATIONS){
+    const firstsymbol = updatedGameBoard[combination[0].row][combination[0].column];
+    const secondsymbol = updatedGameBoard[combination[1].row][combination[1].column];
+    const thirdsymbol = updatedGameBoard[combination[2].row][combination[2].column];
+
+    if(firstsymbol && firstsymbol === secondsymbol && firstsymbol === thirdsymbol){
+      winner = <p>{playerTurn[0].player} Won!</p>
+    }
+  }
 
   function handleBoardSelect(rowIndex, colIndex) {
     setActivePlayer((currentPlayer) => (currentPlayer === "X" ? "0" : "X"));
@@ -17,6 +45,7 @@ function App() {
       { board: { row: rowIndex, col: colIndex }, player: activePlayer },
       ...prevTurn,
     ]);
+
   }
 
   return (
@@ -26,11 +55,12 @@ function App() {
           <Player isActive={activePlayer === "X"} name="Player 1" symbol="X" />
           <Player isActive={activePlayer === "0"} name="Player 2" symbol="0" />
         </ol>
+        {winner}
         <GameBoard
           onSelect={(rowIndex, colIndex) =>
             handleBoardSelect(rowIndex, colIndex)
           }
-          turns={playerTurn}
+          board={updatedGameBoard}
         />
       </div>
       <Log turns={playerTurn} />
