@@ -8,67 +8,109 @@ import GameOver from "./components/GameOver";
 import { WINNING_COMBINATIONS } from "./winning-combinations";
 
 // import "./App.css";
+let PLAYERS = {
+  X: "Player 1",
+  O: "Player 2",
+};
 
 const initialGameBoard = [
   [null, null, null],
   [null, null, null],
-  [null, null, null]
+  [null, null, null],
 ];
 
-function App() {
-  const [activePlayer, setActivePlayer] = useState("X");
-  const [playerTurn, setPlayerTurn] = useState([]);
-  
+function deriveActivePlayer(playerTurn) {
+  let ActivePlayer = "X";
 
-  let updatedGameBoard = [...initialGameBoard.map((innerArray) => [...innerArray])];
-  let winner;
+  if (playerTurn.length > 0 && playerTurn[0].player === "X") {
+    ActivePlayer = "O";
+  }
 
-  for(const turn of playerTurn){
-    const {board, player} = turn;
-    const {row, col} = board;
+  return ActivePlayer;
+}
+
+function deriveGameBoard(playerTurn) {
+  let updatedGameBoard = [
+    ...initialGameBoard.map((innerArray) => [...innerArray]),
+  ];
+
+  for (const turn of playerTurn) {
+    const { board, player } = turn;
+    const { row, col } = board;
     updatedGameBoard[row][col] = player;
   }
 
-  for(const combination of WINNING_COMBINATIONS){
-    const firstsymbol = updatedGameBoard[combination[0].row][combination[0].column];
-    const secondsymbol = updatedGameBoard[combination[1].row][combination[1].column];
-    const thirdsymbol = updatedGameBoard[combination[2].row][combination[2].column];
+  return updatedGameBoard;
+}
 
-    if(firstsymbol && firstsymbol === secondsymbol && firstsymbol === thirdsymbol){
-      winner = playerTurn[0].player;
+function deriveWinner(gameBoard, playerTurn) {
+  let winner;
+  for (const combination of WINNING_COMBINATIONS) {
+    const firstsymbol = gameBoard[combination[0].row][combination[0].column];
+    const secondsymbol = gameBoard[combination[1].row][combination[1].column];
+    const thirdsymbol = gameBoard[combination[2].row][combination[2].column];
+
+    if (
+      firstsymbol &&
+      firstsymbol === secondsymbol &&
+      firstsymbol === thirdsymbol
+    ) {
+      winner = PLAYERS[firstsymbol];
     }
   }
+  return winner;
+}
 
-  let draw = playerTurn.length === 9 && !firstsymbol;
+function App() {
+  const [playerTurn, setPlayerTurn] = useState([]);
+  const gameBaord = deriveGameBoard(playerTurn);
+  const winner = deriveWinner(gameBaord, playerTurn);
+  const activePlayer = deriveActivePlayer(playerTurn);
 
-  function matchRestart(){
+  let draw = playerTurn.length === 9 && !winner;
+
+  function matchRestart() {
     setPlayerTurn([]);
   }
 
   function handleBoardSelect(rowIndex, colIndex) {
-    setActivePlayer((currentPlayer) => (currentPlayer === "X" ? "0" : "X"));
+    setPlayerTurn((prevTurn) => {
+      const activePlayer = deriveActivePlayer(prevTurn);
 
-    setPlayerTurn((prevTurn) => [
-      { board: { row: rowIndex, col: colIndex }, player: activePlayer },
-      ...prevTurn,
-    ]);
+      const updatedTurns = [
+        { board: { row: rowIndex, col: colIndex }, player: activePlayer },
+        ...prevTurn,
+      ];
 
+      return updatedTurns;
+    });
+  }
+
+  function changePlayerName(symbol, name) {
+    PLAYERS[symbol] = name;
   }
 
   return (
     <>
       <div id="game-container">
-        <ol id="players" className="highlight-player">
-          <Player isActive={activePlayer === "X"} name="Player 1" symbol="X" />
-          <Player isActive={activePlayer === "0"} name="Player 2" symbol="0" />
-        </ol>
-        {(winner || draw) && <GameOver matchReset={matchRestart} winner={winner}/>}
-        <GameBoard
-          onSelect={(rowIndex, colIndex) =>
-            handleBoardSelect(rowIndex, colIndex)
-          }
-          board={updatedGameBoard}
-        />
+        <ul id="players" className="highlight-player">
+          <Player
+            isActive={activePlayer === "X"}
+            name={PLAYERS.X}
+            symbol="X"
+            updatePlayerName={changePlayerName}
+          />
+          <Player
+            isActive={activePlayer === "O"}
+            name={PLAYERS.O}
+            symbol="O"
+            updatePlayerName={changePlayerName}
+          />
+        </ul>
+        {(winner || draw) && (
+          <GameOver matchReset={matchRestart} winner={winner} />
+        )}
+        <GameBoard onSelect={handleBoardSelect} board={gameBaord} />
       </div>
       <Log turns={playerTurn} />
     </>
